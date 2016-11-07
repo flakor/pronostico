@@ -11,6 +11,8 @@ var fs 		     = require('fs');
 var weather 	 = require('./node_modules/weather/weather.js');
 var path       = require('path');
 var cheerio 	 = require('cheerio');
+var request 	 = require("request");
+var cache			 = require('apicache').options({ debug: true }).middleware;
 
 // configure app
 app.use(morgan('dev')); // log requests to the console
@@ -40,12 +42,36 @@ router.get('/', function(req, res) {
 });
 
 // ----------------------------------------------------
+router.route('/position/:lat/:lon',cache('30 minutes'))
+
+	.get(function(req,res){
+			apikey = '6752116556ac08cf87608b309c6fbb37';
+			Latitud = req.params.lat;
+			Longitud = req.params.lon;
+			url = 'http://api.openweathermap.org/data/2.5/weather?lat='+Latitud+'&lon='+Longitud+'&units=metric&lang=es&appid='+apikey+'';
+
+request({
+	          url: url,
+	          json: true
+	      }, function (error, response, body) {
+	          if (!error && response.statusCode === 200) {
+	          console.log(body); // Print the json response
+	        	res.setHeader('content-type', 'application/json');
+						res.end(JSON.stringify(body));
+	          }
+	          console.log(error);
+	      })
+
+
+});
+
+
 router.route('/meteo/:nombre')
 
 	// get the city weather by name.
 	.get(function(req, res) {
 		//res.json({ message: 'Informe meteologico: ' + req.params.nombre});
-	
+
 
 		if (weather.city(req.params.nombre) != ''){
 			  options= weather.city(req.params.nombre);
